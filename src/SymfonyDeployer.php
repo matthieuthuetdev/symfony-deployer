@@ -74,15 +74,33 @@ HTACCESS;
             $databaseUser = $readLine('Nom d utilisateur : ');
             $databasePassword = $readLine('Mot de passe : ');
             $databaseHost = $readLine('Host : ');
+            $databasePort = $readLine('Port (3306 par defaut) : ');
+            $databaseServerVersion = $readLine('Version MySQL (8.0.32 par defaut) : ');
+            $databaseCharset = $readLine('Charset (utf8mb4 par defaut) : ');
+
+            if ($databasePort === '') {
+                $databasePort = '3306';
+            }
+
+            if ($databaseServerVersion === '') {
+                $databaseServerVersion = '8.0.32';
+            }
+
+            if ($databaseCharset === '') {
+                $databaseCharset = 'utf8mb4';
+            }
 
             $writeLine('Creation de la ligne DATABASE_URL...');
 
             return sprintf(
-                'DATABASE_URL="mysql://%s:%s@%s/%s"',
+                'DATABASE_URL="mysql://%s:%s@%s:%s/%s?serverVersion=%s&charset=%s"',
                 rawurlencode($databaseUser),
                 rawurlencode($databasePassword),
                 $databaseHost,
-                rawurlencode($databaseName)
+                $databasePort,
+                rawurlencode($databaseName),
+                rawurlencode($databaseServerVersion),
+                rawurlencode($databaseCharset)
             );
         };
         $normalizeEnvLine = static function (string $input) use ($buildDatabaseUrl): string {
