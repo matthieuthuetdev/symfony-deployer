@@ -103,7 +103,7 @@ HTACCESS;
             $writeLine('');
             $writeLine('Installation de la librairie...');
 
-            if (!$runCommand('composer install --no-dev --optimize-autoloader')) {
+            if (!$runCommand('composer install --optimize-autoloader')) {
                 return;
             }
 
@@ -129,7 +129,7 @@ HTACCESS;
 
             $writeLine('Le fichier .htaccess a ete cree dans public/.');
         };
-        $editEnvLocal = static function () use ($envLocalPath, $normalizeEnvLine, $readLine, $writeLine): void {
+        $editEnvLocal = static function () use ($envLocalPath, $normalizeEnvLine, $readLine, $writeLine, $runCommand): void {
             $writeLine('');
             $writeLine('Creation ou modification du fichier .env.local...');
 
@@ -152,9 +152,9 @@ HTACCESS;
                     $input = $readLine('Nouvelle valeur (ou q pour quitter) : ');
 
                     if (strtolower($input) === 'q') {
-                        $writeLine('Retour au menu principal sans enregistrer les modifications.');
+                        $writeLine('Retour au menu principal avec enregistrement des modifications en cours.');
 
-                        return;
+                        break;
                     }
 
                     if ($input === '') {
@@ -176,9 +176,9 @@ HTACCESS;
                 $input = $readLine('Ligne ' . $lineNumber . ' (ou q pour quitter) : ');
 
                 if (strtolower($input) === 'q') {
-                    $writeLine('Retour au menu principal sans enregistrer les modifications.');
+                    $writeLine('Retour au menu principal avec enregistrement des modifications en cours.');
 
-                    return;
+                    break;
                 }
 
                 if ($input === '') {
@@ -202,6 +202,15 @@ HTACCESS;
             }
 
             $writeLine('Le fichier .env.local a ete mis a jour.');
+
+            foreach ($updatedLines as $updatedLine) {
+                if (str_starts_with($updatedLine, 'DATABASE_URL=')) {
+                    $writeLine('DATABASE_URL detectee, lancement des migrations...');
+                    $runCommand('php bin/console doctrine:migrations:migrate --no-interaction');
+
+                    break;
+                }
+            }
         };
         $runAllFeatures = static function () use ($installLibrary, $addHtaccess, $editEnvLocal): void {
             $installLibrary();
