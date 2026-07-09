@@ -1,0 +1,17 @@
+{
+    "name": "matthieuthuetdev/symfony-deployer",
+    "description": "this package is to help to deploy a symfony project",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Matthieuthuetdev\\SymfonyDeployer\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "matthieuthuetdev",
+            "email": "mthuet.pro@gmail.com"
+        }
+    ],
+    "require": {}
+}
