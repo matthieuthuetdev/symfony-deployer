@@ -125,7 +125,11 @@ HTACCESS;
                 return;
             }
 
-            $runCommand('composer update');
+            if (!$runCommand('composer update')) {
+                return;
+            }
+
+            $runCommand('php bin/console asset-map:compile');
         };
         $addHtaccess = static function () use ($publicDirectory, $htaccessContent, $writeLine): void {
             $writeLine('');
@@ -230,10 +234,37 @@ HTACCESS;
                 }
             }
         };
-        $runAllFeatures = static function () use ($installLibrary, $addHtaccess, $editEnvLocal): void {
+        $compileAssetsAndClearCache = static function () use ($envLocalPath, $writeLine, $runCommand): void {
+            $writeLine('');
+            $writeLine('Compilation des assets et vidage du cache...');
+
+            $environment = 'dev';
+
+            if (is_file($envLocalPath)) {
+                $lines = file($envLocalPath, FILE_IGNORE_NEW_LINES);
+
+                if ($lines !== false) {
+                    foreach ($lines as $line) {
+                        if (str_starts_with($line, 'APP_ENV=')) {
+                            $environment = trim(substr($line, strlen('APP_ENV=')), " \t\n\r\0\x0B\"'");
+
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (!$runCommand('php bin/console asset-map:compile')) {
+                return;
+            }
+
+            $runCommand('php bin/console cache:clear --env=' . $environment);
+        };
+        $runAllFeatures = static function () use ($installLibrary, $addHtaccess, $editEnvLocal, $compileAssetsAndClearCache): void {
             $installLibrary();
             $addHtaccess();
             $editEnvLocal();
+            $compileAssetsAndClearCache();
         };
 
         while (true) {
@@ -242,6 +273,7 @@ HTACCESS;
             $writeLine('1. Install library');
             $writeLine('2. Ajouter un .htaccess');
             $writeLine('3. Creer ou modifier .env.local');
+            $writeLine('4. Compiler les assets et vider le cache');
             $writeLine('Entree vide : lancer toutes les fonctionnalites');
             $writeLine('Q : quitter');
             $choice = strtolower($readLine('Votre choix : '));
@@ -276,7 +308,13 @@ HTACCESS;
                 continue;
             }
 
-            $writeLine('Choix invalide. Merci de saisir 1, 2, 3, Entree ou Q.');
+            if ($choice === '4') {
+                $compileAssetsAndClearCache();
+
+                continue;
+            }
+
+            $writeLine('Choix invalide. Merci de saisir 1, 2, 3, 4, Entree ou Q.');
         }
     }
 }
